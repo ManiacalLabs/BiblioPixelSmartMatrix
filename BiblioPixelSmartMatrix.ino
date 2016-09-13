@@ -12,7 +12,8 @@ namespace CMDTYPE
         BRIGHTNESS = 3,
         GETID      = 4,
         SETID      = 5,
-        GETVER	   = 6
+        GETVER	   = 6,
+        SYNC       = 7
     };
 }
 
@@ -42,7 +43,7 @@ config_t config;
 #define COLOR_DEPTH 24                  // known working: 24, 48 - If the sketch uses type `rgb24` directly, COLOR_DEPTH must be 24
 const uint8_t kMatrixWidth = 128;        // known working: 32, 64, 96, 128
 const uint8_t kMatrixHeight = 32;       // known working: 16, 32, 48, 64
-const uint8_t kRefreshDepth = 36;       // known working: 24, 36, 48
+const uint8_t kRefreshDepth = 24;       // known working: 24, 36, 48
 const uint8_t kDmaBufferRows = 4;       // known working: 2-4, use 2 to save memory, more to keep from dropping frames and automatically lowering refresh rate
 const uint8_t kPanelType = SMARTMATRIX_HUB75_32ROW_MOD16SCAN;   // use SMARTMATRIX_HUB75_16ROW_MOD8SCAN for common 16x32 panels
 const uint8_t kMatrixOptions = (SMARTMATRIX_OPTIONS_NONE);      // see http://docs.pixelmatix.com/SmartMatrix for options
@@ -123,12 +124,17 @@ inline void getData()
             if (count == packSize)
             {
                 memcpy(buffer, _buf, packSize);
-                backgroundLayer.swapBuffers(false);
+                // backgroundLayer.swapBuffers(true);
             }
             else {
                 resp = RETURN_CODES::ERROR_SIZE;
             }
             Serial.write(resp);
+        }
+        else if(cmd == CMDTYPE::SYNC)
+        {
+            backgroundLayer.swapBuffers(false);
+            Serial.write(RETURN_CODES::SUCCESS);
         }
         else if(cmd == CMDTYPE::GETID)
         {
