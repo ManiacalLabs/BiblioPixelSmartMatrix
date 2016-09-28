@@ -31,14 +31,6 @@ namespace RETURN_CODES
     };
 }
 
-// Only here so we can retrieve and ignore from BiblioPixel
-typedef struct __attribute__((__packed__))
-{
-    uint8_t type;
-    uint16_t pixelCount;
-    uint8_t spiSpeed;
-} config_t;
-config_t config;
 
 #define COLOR_DEPTH 24                  // known working: 24, 48 - If the sketch uses type `rgb24` directly, COLOR_DEPTH must be 24
 const uint8_t kMatrixWidth = 128;        // known working: 32, 64, 96, 128
@@ -51,14 +43,13 @@ const uint8_t kBackgroundLayerOptions = (SM_BACKGROUND_OPTIONS_NONE);
 const uint8_t kScrollingLayerOptions = (SM_SCROLLING_OPTIONS_NONE);
 const uint8_t kIndexedLayerOptions = (SM_INDEXED_OPTIONS_NONE);
 
+
 SMARTMATRIX_ALLOCATE_BUFFERS(matrix, kMatrixWidth, kMatrixHeight, kRefreshDepth, kDmaBufferRows, kPanelType, kMatrixOptions);
 SMARTMATRIX_ALLOCATE_BACKGROUND_LAYER(backgroundLayer, kMatrixWidth, kMatrixHeight, COLOR_DEPTH, kBackgroundLayerOptions);
 
 #define numLEDs (kMatrixWidth * kMatrixHeight)
 #define bytesPerPixel 3
 #define packSize (numLEDs * bytesPerPixel)
-
-// rgb24 * _LEDS;
 
 void setup()
 {
@@ -86,8 +77,6 @@ inline void getData()
     static uint8_t emptyCount = 0;
     static size_t c = 0;
 
-    static uint8_t _buf[packSize];
-
     if (Serial.available())
     {
         cmd = Serial.read();
@@ -96,16 +85,16 @@ inline void getData()
 
         if (cmd == CMDTYPE::PIXEL_DATA)
         {
+            rgb24 *buffer = backgroundLayer.backBuffer();
+
             count = 0;
             emptyCount = 0;
-            rgb24 *buffer = backgroundLayer.backBuffer();
 
             if (size == packSize)
             {
                 while (count < packSize)
                 {
-                    c = Serial.readBytes(((char*)_buf) + count, packSize - count);
-                    //c = Serial.readBytes(((char*)buffer) + count, packSize - count);
+                    c = Serial.readBytes(((char*)buffer) + count, 64);
                     if (c == 0)
                     {
                         emptyCount++;
@@ -121,19 +110,18 @@ inline void getData()
             }
 
             uint8_t resp = RETURN_CODES::SUCCESS;
-            if (count == packSize)
+            if (count != packSize)
             {
-                memcpy(buffer, _buf, packSize);
-                // backgroundLayer.swapBuffers(true);
-            }
-            else {
                 resp = RETURN_CODES::ERROR_SIZE;
+            }
+            else{
+                backgroundLayer.swapBuffers(false);
             }
             Serial.write(resp);
         }
         else if(cmd == CMDTYPE::SYNC)
         {
-            backgroundLayer.swapBuffers(false);
+            // backgroundLayer.swapBuffers(true);
             Serial.write(RETURN_CODES::SUCCESS);
         }
         else if(cmd == CMDTYPE::GETID)
@@ -155,36 +143,9 @@ inline void getData()
         }
         else if (cmd == CMDTYPE::SETUP_DATA)
         {
-            uint8_t result = RETURN_CODES::SUCCESS;
-            config_t temp;
-
-            if (size != sizeof(config_t))
-            {
-                result = RETURN_CODES::ERROR_SIZE;
-            }
-            else
-            {
-                size_t read = Serial.readBytes((char*)&temp, sizeof(config_t));
-                if (read != size)
-                {
-                    result = RETURN_CODES::ERROR_SIZE;
-                }
-                else
-                {
-                    temp.pixelCount = temp.pixelCount / bytesPerPixel;
-
-                    if(temp.pixelCount != numLEDs){
-                        result = RETURN_CODES::ERROR_PIXEL_COUNT;
-                    }
-
-                    //On config we reset the brightness.
-                    //Otherwise previous brightness values could
-                    //still be in memory.
-                    backgroundLayer.setBrightness(255);
-                }
-            }
-
-            Serial.write(result);
+            for(int i=0; i<size; i++) Serial.read();
+            // Just succeed. Config is hardcoded at compile time
+            Serial.write(RETURN_CODES::SUCCESS);
         }
         else if (cmd == CMDTYPE::BRIGHTNESS)
         {
