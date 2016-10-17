@@ -109,19 +109,17 @@ inline void getData()
                 }
             }
 
-            uint8_t resp = RETURN_CODES::SUCCESS;
             if (count != packSize)
             {
-                resp = RETURN_CODES::ERROR_SIZE;
+                Serial.write(RETURN_CODES::ERROR_SIZE);
             }
             else{
-                backgroundLayer.swapBuffers(false);
+                Serial.write(RETURN_CODES::SUCCESS);
             }
-            Serial.write(resp);
         }
         else if(cmd == CMDTYPE::SYNC)
         {
-            // backgroundLayer.swapBuffers(true);
+            backgroundLayer.swapBuffers(false);
             Serial.write(RETURN_CODES::SUCCESS);
         }
         else if(cmd == CMDTYPE::GETID)

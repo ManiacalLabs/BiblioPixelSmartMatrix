@@ -31,7 +31,7 @@ except:
     led.all_off()
     led.update()
 
-#anim = ScrollText(led, "Maniacal Labs Rules!", xPos = 128, yPos = 0, color = colors.Red, bgcolor = colors.Off, size = 4)
+# anim = ScrollText(led, "Maniacal Labs Rules!", xPos = 128, yPos = 0, color = colors.Red, bgcolor = colors.Off, size = 4)
 # try:
 #     anim.run(amt=6, fps=30)
 # finally:
