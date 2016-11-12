@@ -54,7 +54,7 @@ SMARTMATRIX_ALLOCATE_BACKGROUND_LAYER(backgroundLayer, kMatrixWidth, kMatrixHeig
 void setup()
 {
     pinMode(13, OUTPUT);
-    Serial.begin(1000000);
+    Serial.begin(115200);
     Serial.setTimeout(10);
 
     matrix.addLayer(&backgroundLayer);
@@ -65,7 +65,7 @@ void setup()
     backgroundLayer.fillScreen({0,0,0});
     backgroundLayer.enableColorCorrection(true);
 
-    backgroundLayer.swapBuffers();
+    // backgroundLayer.swapBuffers();
 }
 
 #define EMPTYMAX 100
@@ -82,7 +82,6 @@ inline void getData()
         cmd = Serial.read();
         size = 0;
         Serial.readBytes((char*)&size, 2);
-
         if (cmd == CMDTYPE::PIXEL_DATA)
         {
             rgb24 *buffer = backgroundLayer.backBuffer();
@@ -182,4 +181,6 @@ inline void getData()
 void loop()
 {
     getData();
+    // Serial.println("Testing");
+    // delay(500);
 }
